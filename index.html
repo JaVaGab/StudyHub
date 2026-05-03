@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #7c6aff;
+    --accent2: #ff6a9d;
+    --accent3: #6affcb;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --tag-bg: rgba(124,106,255,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,255,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .blob { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.18; }
+  .blob1 { width: 500px; height: 500px; background: var(--accent); top: -100px; right: -100px; }
+  .blob2 { width: 400px; height: 400px; background: var(--accent2); bottom: 0; left: -100px; }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+
+  header { padding: 40px 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .logo span { opacity: 0.5; }
+
+  .header-tag {
+    font-size: 12px; font-weight: 500; color: var(--accent);
+    background: var(--tag-bg); border: 1px solid rgba(124,106,255,0.25);
+    padding: 6px 14px; border-radius: 20px; letter-spacing: 0.5px;
+  }
+
+
+  /* ===== TIMER ===== */
+  .timer-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 44px;
+  }
+
+  .timer-label {
+    font-size: 12px; font-weight: 600; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 16px; text-align: center;
+  }
+
+  /* Custom time inputs */
+  .timer-custom {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .timer-input-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .timer-input-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .timer-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .timer-num-btn {
+    width: 28px; height: 36px;
+    background: transparent; border: none;
+    color: var(--muted); font-size: 16px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .timer-num-btn:hover { background: rgba(124,106,255,0.15); color: var(--text); }
+
+  .timer-num-input {
+    width: 44px; height: 36px;
+    background: transparent; border: none;
+    color: var(--text); font-size: 15px; font-weight: 600;
+    text-align: center; font-family: 'Syne', sans-serif;
+  }
+
+  .timer-num-input:focus { outline: none; }
+  .timer-num-input::-webkit-inner-spin-button,
+  .timer-num-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  .timer-sep {
+    color: var(--muted); font-size: 20px; font-weight: 300;
+    padding: 0 6px;
+  }
+
+  .timer-presets {
+    display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .preset-btn {
+    padding: 4px 12px; border-radius: 8px;
+    font-size: 11px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .preset-btn:hover, .preset-btn.active {
+    background: var(--tag-bg); border-color: rgba(124,106,255,0.4); color: var(--text);
+  }
+
+  .timer-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 64px; font-weight: 800; letter-spacing: -2px;
+    color: var(--text); text-align: center;
+    margin: 16px 0 6px;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
+  }
+
+  .timer-display.break-mode { color: var(--accent3); }
+
+  .timer-mode-label {
+    font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 16px;
+  }
+
+  .timer-progress {
+    width: 100%; height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px; margin-bottom: 20px; overflow: hidden;
+  }
+
+  .timer-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 1s linear;
+    width: 100%;
+  }
+
+  .timer-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+  .timer-btn {
+    padding: 10px 28px; border-radius: 10px;
+    font-size: 14px; font-weight: 500;
+    border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+
+  .timer-btn-start { background: var(--accent); color: white; }
+  .timer-btn-start:hover { background: #9480ff; transform: translateY(-1px); }
+
+  .timer-btn-reset {
+    background: rgba(255,255,255,0.07); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .timer-btn-reset:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+  /* ===== FILTER BAR ===== */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+
+  .filter-btn {
+    padding: 8px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--tag-bg); border-color: rgba(124,106,255,0.4); color: var(--text);
+  }
+
+  /* ===== SECTIONS ===== */
+  .section { margin-bottom: 44px; }
+
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase;
+  }
+
+  .section-line { flex: 1; height: 1px; background: var(--border); }
+
+  .section-count {
+    font-size: 12px; color: var(--muted);
+    background: var(--surface2); padding: 3px 10px;
+    border-radius: 20px; border: 1px solid var(--border);
+  }
+
+  .grid { display: grid; gap: 10px; }
+  .grid-2 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+
+  .card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; text-decoration: none;
+    color: var(--text); font-size: 14px; font-weight: 500;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+
+  .card::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+    pointer-events: none;
+  }
+
+  .card:hover {
+    border-color: rgba(124,106,255,0.35);
+    background: var(--surface2);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .card-icon {
+    font-size: 20px; flex-shrink: 0;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.05); border-radius: 10px;
+  }
+
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-desc { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .card-tag { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
+  .tag-ru { background: rgba(106,255,203,0.1); color: var(--accent3); }
+  .tag-en { background: rgba(255,106,157,0.1); color: var(--accent2); }
+  .tag-free { background: rgba(124,106,255,0.1); color: var(--accent); }
+
+  /* Tips */
+  .tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+
+  .tip-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; transition: all 0.2s; }
+  .tip-card:hover { border-color: rgba(124,106,255,0.2); transform: translateY(-2px); }
+
+  .tip-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: rgba(124,106,255,0.2); line-height: 1; margin-bottom: 8px; }
+  .tip-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .tip-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* Subjects */
+  .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+
+  .subject-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; transition: all 0.2s; }
+  .subject-card:hover { border-color: rgba(124,106,255,0.25); transform: translateY(-2px); }
+
+  .subject-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .subject-icon { font-size: 22px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .subject-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .subject-links { display: flex; flex-direction: column; gap: 6px; }
+
+  .subject-link {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: rgba(255,255,255,0.03);
+    border-radius: 8px; text-decoration: none; color: var(--muted);
+    font-size: 13px; transition: all 0.15s; border: 1px solid transparent;
+  }
+
+  .subject-link:hover { color: var(--text); background: rgba(124,106,255,0.08); border-color: rgba(124,106,255,0.2); }
+  .subject-link-arrow { opacity: 0; transition: opacity 0.15s, transform 0.15s; }
+  .subject-link:hover .subject-link-arrow { opacity: 1; transform: translateX(3px); }
+
+  footer { text-align: center; padding: 32px 0 0; font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section { animation: fadeUp 0.5s ease both; }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.1s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.2s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+  .section:nth-child(6) { animation-delay: 0.3s; }
+
+  .hidden { display: none !important; }
+
+  /* Error msg */
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">Study<span>Hub</span></div>
+    <div class="header-tag">📚 Инструменты самообразования</div>
+  </header>
+
+
+  <!-- Timer -->
+  <div class="timer-widget">
+    <div class="timer-label">⏱ Таймер фокуса</div>
+
+    <div class="timer-presets">
+      <button class="preset-btn active" onclick="applyPreset(25,5,this)">Pomodoro 25/5</button>
+      <button class="preset-btn" onclick="applyPreset(45,10,this)">45/10 мин</button>
+      <button class="preset-btn" onclick="applyPreset(50,10,this)">50/10 мин</button>
+      <button class="preset-btn" onclick="applyPreset(90,20,this)">90/20 мин</button>
+    </div>
+
+    <div class="timer-custom">
+      <div class="timer-input-group">
+        <div class="timer-input-label">Работа (мин)</div>
+        <div class="timer-input-wrap">
+          <button class="timer-num-btn" onclick="changeVal('workInput', -1)">−</button>
+          <input class="timer-num-input" type="number" id="workInput" value="25" min="1" max="120" onchange="onInputChange()">
+          <button class="timer-num-btn" onclick="changeVal('workInput', 1)">+</button>
+        </div>
+      </div>
+
+      <div class="timer-sep">/</div>
+
+      <div class="timer-input-group">
+        <div class="timer-input-label">Перерыв (мин)</div>
+        <div class="timer-input-wrap">
+          <button class="timer-num-btn" onclick="changeVal('breakInput', -1)">−</button>
+          <input class="timer-num-input" type="number" id="breakInput" value="5" min="1" max="60" onchange="onInputChange()">
+          <button class="timer-num-btn" onclick="changeVal('breakInput', 1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-display" id="timerDisplay">25:00</div>
+    <div class="timer-mode-label" id="timerMode">Время работы</div>
+    <div class="timer-progress"><div class="timer-progress-bar" id="progressBar"></div></div>
+
+    <div class="timer-controls">
+      <button class="timer-btn timer-btn-start" id="startBtn" onclick="toggleTimer()">▶ Старт</button>
+      <button class="timer-btn timer-btn-reset" onclick="resetTimer()">↺ Сброс</button>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterSection('all', this)">Всё</button>
+    <button class="filter-btn" onclick="filterSection('textbooks', this)">Учебники</button>
+    <button class="filter-btn" onclick="filterSection('apps', this)">Приложения</button>
+    <button class="filter-btn" onclick="filterSection('sites', this)">Сайты</button>
+    <button class="filter-btn" onclick="filterSection('subjects', this)">По предметам</button>
+    <button class="filter-btn" onclick="filterSection('tips', this)">Советы</button>
+  </div>
+
+  <!-- Учебники -->
+  <div class="section" data-section="textbooks">
+    <div class="section-header">
+      <div class="section-title">📗 Учебники</div>
+      <div class="section-line"></div>
+      <div class="section-count">2</div>
+    </div>
+    <div class="grid grid-2">
+      <a href="https://11klasov.net" target="_blank" class="card">
+        <div class="card-icon">📘</div>
+        <div class="card-info">
+          <div class="card-name">11klasov.net</div>
+          <div class="card-desc">Учебники онлайн, все предметы</div>
+        </div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://prosv.ru" target="_blank" class="card">
+        <div class="card-icon">📙</div>
+        <div class="card-info">
+          <div class="card-name">Просвещение</div>
+          <div class="card-desc">Официальные учебники издательства</div>
+        </div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Приложения -->
+  <div class="section" data-section="apps">
+    <div class="section-header">
+      <div class="section-title">📱 Приложения</div>
+      <div class="section-line"></div>
+      <div class="section-count">7</div>
+    </div>
+    <div class="grid grid-3">
+      <a href="https://apps.ankiweb.net" target="_blank" class="card">
+        <div class="card-icon">🃏</div>
+        <div class="card-info"><div class="card-name">Anki</div><div class="card-desc">Карточки и повторение</div></div>
+        <span class="card-tag tag-free">FREE</span>
+      </a>
+      <a href="https://notion.so" target="_blank" class="card">
+        <div class="card-icon">📝</div>
+        <div class="card-info"><div class="card-name">Notion</div><div class="card-desc">Конспекты и планирование</div></div>
+        <span class="card-tag tag-free">FREE</span>
+      </a>
+      <a href="https://www.forestapp.cc" target="_blank" class="card">
+        <div class="card-icon">🌲</div>
+        <div class="card-info"><div class="card-name">Forest</div><div class="card-desc">Фокус без телефона</div></div>
+        <span class="card-tag tag-en">EN</span>
+      </a>
+      <a href="https://quizlet.com" target="_blank" class="card">
+        <div class="card-icon">🧠</div>
+        <div class="card-info"><div class="card-name">Quizlet</div><div class="card-desc">Тесты и карточки</div></div>
+        <span class="card-tag tag-en">EN</span>
+      </a>
+      <a href="https://todoist.com" target="_blank" class="card">
+        <div class="card-icon">✅</div>
+        <div class="card-info"><div class="card-name">Todoist</div><div class="card-desc">Задачи и план на день</div></div>
+        <span class="card-tag tag-free">FREE</span>
+      </a>
+      <a href="https://www.onenote.com" target="_blank" class="card">
+        <div class="card-icon">🗒️</div>
+        <div class="card-info"><div class="card-name">OneNote</div><div class="card-desc">Заметки от Microsoft</div></div>
+        <span class="card-tag tag-free">FREE</span>
+      </a>
+      <a href="https://keep.google.com" target="_blank" class="card">
+        <div class="card-icon">📌</div>
+        <div class="card-info"><div class="card-name">Google Keep</div><div class="card-desc">Быстрые заметки</div></div>
+        <span class="card-tag tag-free">FREE</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Полезные сайты -->
+  <div class="section" data-section="sites">
+    <div class="section-header">
+      <div class="section-title">🌐 Полезные сайты</div>
+      <div class="section-line"></div>
+      <div class="section-count">10</div>
+    </div>
+    <div class="grid grid-3">
+      <a href="https://interneturok.ru" target="_blank" class="card">
+        <div class="card-icon">🎬</div>
+        <div class="card-info"><div class="card-name">InternetUrok</div><div class="card-desc">Видеоуроки по всем предметам</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://foxford.ru" target="_blank" class="card">
+        <div class="card-icon">🦊</div>
+        <div class="card-info"><div class="card-name">Фоксфорд</div><div class="card-desc">Онлайн-школа и курсы</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://yaklass.ru" target="_blank" class="card">
+        <div class="card-icon">🎯</div>
+        <div class="card-info"><div class="card-name">ЯКласс</div><div class="card-desc">Задания и тренировки</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://resh.edu.ru" target="_blank" class="card">
+        <div class="card-icon">🏫</div>
+        <div class="card-info"><div class="card-name">РЭШ</div><div class="card-desc">Российская электронная школа</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://решуегэ.рф" target="_blank" class="card">
+        <div class="card-icon">📊</div>
+        <div class="card-info"><div class="card-name">Решу ЕГЭ</div><div class="card-desc">Подготовка к экзаменам</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://postnauka.org" target="_blank" class="card">
+        <div class="card-icon">🔬</div>
+        <div class="card-info"><div class="card-name">ПостНаука</div><div class="card-desc">Наука простым языком</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://arzamas.academy" target="_blank" class="card">
+        <div class="card-icon">🏛️</div>
+        <div class="card-info"><div class="card-name">Arzamas</div><div class="card-desc">История и гуманитарные науки</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://stepik.org" target="_blank" class="card">
+        <div class="card-icon">💻</div>
+        <div class="card-info"><div class="card-name">Stepik</div><div class="card-desc">Бесплатные онлайн-курсы</div></div>
+        <span class="card-tag tag-ru">RU</span>
+      </a>
+      <a href="https://khanacademy.org" target="_blank" class="card">
+        <div class="card-icon">🌍</div>
+        <div class="card-info"><div class="card-name">Khan Academy</div><div class="card-desc">Математика, физика, история</div></div>
+        <span class="card-tag tag-en">EN</span>
+      </a>
+      <a href="https://www.wolframalpha.com" target="_blank" class="card">
+        <div class="card-icon">🧮</div>
+        <div class="card-info"><div class="card-name">Wolfram Alpha</div><div class="card-desc">Решение задач и вычисления</div></div>
+        <span class="card-tag tag-en">EN</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- По предметам -->
+  <div class="section" data-section="subjects">
+    <div class="section-header">
+      <div class="section-title">🎓 По предметам</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="subjects-grid">
+      <div class="subject-card">
+        <div class="subject-header"><div class="subject-icon">➕</div><div class="subject-name">Математика</div></div>
+        <div class="subject-links">
+          <a href="https://решуегэ.рф/math" target="_blank" class="subject-link">Решу ЕГЭ — математика <span class="subject-link-arrow">→</span></a>
+          <a href="https://www.wolframalpha.com" target="_blank" class="subject-link">Wolfram Alpha <span class="subject-link-arrow">→</span></a>
+          <a href="https://khanacademy.org/math" target="_blank" class="subject-link">Khan Academy Math <span class="subject-link-arrow">→</span></a>
+        </div>
+      </div>
+      <div class="subject-card">
+        <div class="subject-header"><div class="subject-icon">⚗️</div><div class="subject-name">Физика / Химия</div></div>
+        <div class="subject-links">
+          <a href="https://interneturok.ru/physics" target="_blank" class="subject-link">InternetUrok — физика <span class="subject-link-arrow">→</span></a>
+          <a href="https://postnauka.org/science" target="_blank" class="subject-link">ПостНаука — науки <span class="subject-link-arrow">→</span></a>
+          <a href="https://решуегэ.рф/chemistry" target="_blank" class="subject-link">Решу ЕГЭ — химия <span class="subject-link-arrow">→</span></a>
+        </div>
+      </div>
+      <div class="subject-card">
+        <div class="subject-header"><div class="subject-icon">📖</div><div class="subject-name">Русский / Литература</div></div>
+        <div class="subject-links">
+          <a href="https://решуегэ.рф/russian" target="_blank" class="subject-link">Решу ЕГЭ — русский <span class="subject-link-arrow">→</span></a>
+          <a href="https://arzamas.academy" target="_blank" class="subject-link">Arzamas — литература <span class="subject-link-arrow">→</span></a>
+          <a href="https://interneturok.ru/russian" target="_blank" class="subject-link">InternetUrok — русский <span class="subject-link-arrow">→</span></a>
+        </div>
+      </div>
+      <div class="subject-card">
+        <div class="subject-header"><div class="subject-icon">🗺️</div><div class="subject-name">История / Обществознание</div></div>
+        <div class="subject-links">
+          <a href="https://arzamas.academy" target="_blank" class="subject-link">Arzamas — история <span class="subject-link-arrow">→</span></a>
+          <a href="https://решуегэ.рф/history" target="_blank" class="subject-link">Решу ЕГЭ — история <span class="subject-link-arrow">→</span></a>
+          <a href="https://interneturok.ru/social-science" target="_blank" class="subject-link">InternetUrok — общество <span class="subject-link-arrow">→</span></a>
+        </div>
+      </div>
+      <div class="subject-card">
+        <div class="subject-header"><div class="subject-icon">🇬🇧</div><div class="subject-name">Английский язык</div></div>
+        <div class="subject-links">
+          <a href="https://skyeng.ru" target="_blank" class="subject-link">Skyeng <span class="subject-link-arrow">→</span></a>
+          <a href="https://решуегэ.рф/english" target="_blank" class="subject-link">Решу ЕГЭ — английский <span class="subject-link-arrow">→</span></a>
+          <a href="https://khanacademy.org" target="_blank" class="subject-link">Khan Academy <span class="subject-link-arrow">→</span></a>
+        </div>
+      </div>
+      <div class="subject-card">
+        <div class="subject-header"><div class="subject-icon">💻</div><div class="subject-name">Информатика</div></div>
+        <div class="subject-links">
+          <a href="https://stepik.org" target="_blank" class="subject-link">Stepik — программирование <span class="subject-link-arrow">→</span></a>
+          <a href="https://решуегэ.рф/informatics" target="_blank" class="subject-link">Решу ЕГЭ — информатика <span class="subject-link-arrow">→</span></a>
+          <a href="https://code.org" target="_blank" class="subject-link">Code.org <span class="subject-link-arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Советы -->
+  <div class="section" data-section="tips">
+    <div class="section-header">
+      <div class="section-title">💡 Как учиться эффективно</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-num">01</div>
+        <div class="tip-title">Ставь конкретную цель</div>
+        <div class="tip-text">Не «повторить физику», а «разобрать три задачи на законы Ньютона». Чёткая цель — половина результата.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">02</div>
+        <div class="tip-title">Убирай телефон</div>
+        <div class="tip-text">Используй таймер выше. 25–45 минут без уведомлений дают больше, чем два часа с постоянными отвлечениями.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">03</div>
+        <div class="tip-title">Объясняй вслух</div>
+        <div class="tip-text">Попробуй рассказать тему так, будто объясняешь другу. Если не можешь — значит, сам ещё не понял.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">04</div>
+        <div class="tip-title">Проверяй источники</div>
+        <div class="tip-text">ИИ может ошибаться. Любой важный факт, полученный от нейросети, стоит перепроверить в надёжном источнике.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">05</div>
+        <div class="tip-title">Делай паузы</div>
+        <div class="tip-text">После каждого блока работы — короткий отдых. Мозг усваивает материал лучше, когда не перегружён.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-num">06</div>
+        <div class="tip-title">Веди дневник прогресса</div>
+        <div class="tip-text">Записывай, что изучил за день. Это помогает видеть движение вперёд и поддерживает мотивацию.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    StudyHub · Сделано для проекта «Проблемы современного образования» · 2026
+  </footer>
+
+</div>
+
+<script>
+// ===== TIMER =====
+let workMin = 25, breakMin = 5;
+let totalSec, remainSec, isRunning = false, isWork = true, interval = null;
+
+function init() {
+  workMin = parseInt(document.getElementById('workInput').value) || 25;
+  breakMin = parseInt(document.getElementById('breakInput').value) || 5;
+  totalSec = workMin * 60;
+  remainSec = totalSec;
+  updateDisplay();
+}
+
+function changeVal(id, delta) {
+  const el = document.getElementById(id);
+  const min = parseInt(el.min) || 1;
+  const max = parseInt(el.max) || 120;
+  el.value = Math.max(min, Math.min(max, (parseInt(el.value) || 1) + delta));
+  onInputChange();
+}
+
+function onInputChange() {
+  if (!isRunning) {
+    clearPresets();
+    init();
+  }
+}
+
+function clearPresets() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+function applyPreset(w, b, btn) {
+  clearPresets();
+  btn.classList.add('active');
+  document.getElementById('workInput').value = w;
+  document.getElementById('breakInput').value = b;
+  if (!isRunning) init();
+}
+
+function toggleTimer() {
+  if (isRunning) {
+    clearInterval(interval);
+    isRunning = false;
+    document.getElementById('startBtn').textContent = '▶ Продолжить';
+  } else {
+    isRunning = true;
+    document.getElementById('startBtn').textContent = '⏸ Пауза';
+    interval = setInterval(() => {
+      remainSec--;
+      if (remainSec <= 0) {
+        isWork = !isWork;
+        workMin = parseInt(document.getElementById('workInput').value) || 25;
+        breakMin = parseInt(document.getElementById('breakInput').value) || 5;
+        totalSec = (isWork ? workMin : breakMin) * 60;
+        remainSec = totalSec;
+        document.getElementById('timerMode').textContent = isWork ? 'Время работы' : 'Перерыв ☕';
+        document.getElementById('timerDisplay').className = 'timer-display' + (isWork ? '' : ' break-mode');
+      }
+      updateDisplay();
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(interval);
+  isRunning = false; isWork = true;
+  document.getElementById('startBtn').textContent = '▶ Старт';
+  document.getElementById('timerMode').textContent = 'Время работы';
+  document.getElementById('timerDisplay').className = 'timer-display';
+  init();
+}
+
+function updateDisplay() {
+  const m = Math.floor(remainSec / 60).toString().padStart(2, '0');
+  const s = (remainSec % 60).toString().padStart(2, '0');
+  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  document.getElementById('progressBar').style.width = (remainSec / totalSec * 100) + '%';
+}
+
+// ===== FILTER =====
+function filterSection(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.section[data-section]').forEach(s => {
+    s.classList.toggle('hidden', type !== 'all' && s.dataset.section !== type);
+  });
+}
+
+// Init
+init();
+</script>
+</body>
+</html>
